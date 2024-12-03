@@ -1,5 +1,4 @@
 use counter::Counter;
-use std::fmt::Display;
 type Pair = (i32, i32);
 
 // #[aoc_generator(day1)]
@@ -16,8 +15,8 @@ pub fn input_generator(input: &str) -> Vec<Pair> {
 }
 
 
-// #[aoc(day1, part1)]
-pub fn part1(input: &str) -> impl Display {
+#[aoc(day1, part1)]
+pub fn part1(input: &str) -> i32 {
   let input = input_generator(input);
   let mut l1 = input.iter().map(|p| p.0 ).collect::<Vec<i32>>();
   let mut l2 = input.iter().map(|p| p.1 ).collect::<Vec<i32>>();
@@ -32,8 +31,8 @@ pub fn part1(input: &str) -> impl Display {
   ans
 }
 
-// #[aoc(day1, part2)]
-pub fn part2(input: &str) -> impl Display {
+#[aoc(day1, part2)]
+pub fn part2(input: &str) -> i32 {
   let input = input_generator(input);
   let l1 = input.iter().map(|p| p.0 ).collect::<Vec<i32>>();
   let l2 = input.iter().map(|p| p.1 ).collect::<Counter<i32>>();
