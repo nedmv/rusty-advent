@@ -48,11 +48,35 @@ pub fn part1(input: &str) -> usize {
   seen.len()
 }
 
-fn is_loop(m: &mut Vec<Vec<u8>>, start: (usize, usize), dir: usize, obstacle: (usize, usize)) -> bool {
+fn get_path(m: &Vec<Vec<u8>>, start: (usize, usize), dir: usize) -> Vec<(usize, usize, usize)> {
+  let mut path = Vec::new();
+  let mut cur = (start.0, start.1, dir);
+  let rows = m.len() as i32;
+  let cols = m[0].len() as i32;
+  loop {
+    path.push(cur);
+
+    for dir in cur.2..cur.2+4 {
+      let r = cur.0 as i32 + MOVES[dir % 4];
+      let c = cur.1 as i32 + MOVES[(dir+1) % 4];
+      if r < 0 || r >= rows || c < 0 || c >= cols {
+        return path;
+      }
+      let r = r as usize;
+      let c = c as usize;
+      if m[r][c] != b'#' {
+        cur = (r, c, dir);
+        break;
+      }
+    }
+  }
+}
+
+fn is_loop(m: &mut Vec<Vec<u8>>, start: (usize, usize, usize), obstacle: (usize, usize, usize)) -> bool {
   m[obstacle.0][obstacle.1] = b'#';
 
   let mut seen = HashSet::with_hasher(Hash);
-  let mut cur = (start.0, start.1, dir);
+  let mut cur = start;
   let rows = m.len() as i32;
   let cols = m[0].len() as i32;
   let mut looped = false;
@@ -87,13 +111,18 @@ fn is_loop(m: &mut Vec<Vec<u8>>, start: (usize, usize), dir: usize, obstacle: (u
 pub fn part2(input: &str) -> usize {
   let mut m = get_map(input);
   let start = find_start(&m);
-  let mut seen = get_seen(&m, start, 0);
-  seen.remove(&start);
+  let path = get_path(&m, start, 0);
+  let mut seen = HashSet::with_hasher(Hash);
+  seen.insert(start);
   let mut ans = 0;
-  for obstacle in seen {
-    if is_loop(&mut m, start, 0, obstacle) {
-      ans += 1;
+  let mut prev = (start.0, start.1, 0);
+  for obstacle in path {
+    if seen.insert((obstacle.0, obstacle.1)) {
+      if is_loop(&mut m, prev, obstacle) {
+        ans += 1;
+      }
     }
+    prev = obstacle;
   }
   ans
 }
