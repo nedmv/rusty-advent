@@ -1,11 +1,4 @@
-
-fn get_map(input: &str) -> Vec<Vec<u8>> {
-  input
-      .lines()
-      .map(|l| {
-          l.bytes().collect()
-      }).collect()
-}
+use crate::utils::get_map;
 
 const DIRECTIONS: [[i32; 2]; 8] = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 const PATTERN: [u8; 3] = [b'M', b'A', b'S'];
