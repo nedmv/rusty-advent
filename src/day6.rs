@@ -1,6 +1,7 @@
 
 use crate::utils::get_map;
 use std::collections::HashSet;
+use fasthash::sea::Hash64 as Hash;
 
 const MOVES: [i32;5] = [-1, 0, 1, 0, -1]; // NESW
 
@@ -15,8 +16,8 @@ fn find_start(m: &Vec<Vec<u8>>) -> (usize, usize) {
   (0, 0)
 }
 
-fn get_seen(m: &Vec<Vec<u8>>, start: (usize, usize), dir: usize) -> HashSet<(usize, usize)> {
-  let mut seen = HashSet::new();
+fn get_seen(m: &Vec<Vec<u8>>, start: (usize, usize), dir: usize) -> HashSet<(usize, usize), Hash> {
+  let mut seen = HashSet::with_hasher(Hash);
   let mut cur = (start.0, start.1, dir);
   let rows = m.len() as i32;
   let cols = m[0].len() as i32;
@@ -50,7 +51,7 @@ pub fn part1(input: &str) -> usize {
 fn is_loop(m: &mut Vec<Vec<u8>>, start: (usize, usize), dir: usize, obstacle: (usize, usize)) -> bool {
   m[obstacle.0][obstacle.1] = b'#';
 
-  let mut seen = HashSet::new();
+  let mut seen = HashSet::with_hasher(Hash);
   let mut cur = (start.0, start.1, dir);
   let rows = m.len() as i32;
   let cols = m[0].len() as i32;
