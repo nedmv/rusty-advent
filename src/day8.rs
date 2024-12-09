@@ -82,3 +82,22 @@ pub fn part2(input: &str) -> u32 {
   }
   calc_antinodes(&m)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT: &str = include_str!("../input/2024/day8.txt");
+    const ANSWER1: &str = include_str!("../answer/2024/day8p1.txt");
+    const ANSWER2: &str = include_str!("../answer/2024/day8p2.txt");
+
+    #[test]
+    fn part1_local() {
+        assert_eq!(part1(INPUT).to_string(), ANSWER1);
+    }
+
+    #[test]
+    fn part2_local() {
+        assert_eq!(part2(INPUT).to_string(), ANSWER2);
+    }
+}
