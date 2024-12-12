@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use fasthash::sea::Hash64 as Hash;
+
 use nalgebra::base::DMatrix;
 
 // Source: https://www.reddit.com/r/adventofcode/comments/1hbtz8w/2024_day_11_every_sequence_converges_to_3947/
@@ -99,40 +102,38 @@ pub fn part2_matrix(input: &str) -> usize {
 }
 
 fn get_transitions(input: &str) -> (usize, usize, Vec<(usize, usize)>) {
-  let mut stones = get_stones(input);
-  let n = stones.len();
-  let mut pos = 0;
-  let mut transitions = Vec::new();
+  let start_stones = get_stones(input);
+  let n = start_stones.len();
 
-  while pos < stones.len() {
+  let mut ids = HashMap::with_capacity_and_hasher(TOTAL_STONES,Hash);
+  let mut stones = vec![0; TOTAL_STONES];
+  for i in 0..n {
+    stones[i] = start_stones[i];
+    ids.entry(stones[i]).or_insert(i);
+  }
+  let mut pos = 0;
+  let mut transitions = Vec::with_capacity(TOTAL_STONES * 2);
+
+  let mut len = n;
+  while pos < len {
     let stone = stones[pos];
     let next = get_next(stone);
     let t = next.0;
 
-    let mut next_pos = stones.len();
-    for i in 0..stones.len() {
-      if stones[i] == t { 
-        next_pos = i;
-        break;
-      }
+    let id = ids.entry(t).or_insert(len);
+    if *id == len {
+      stones[len] = t;
+      len += 1;
     }
-    if next_pos == stones.len() {
-      stones.push(t);
-    }
-    transitions.push((pos, next_pos));
+    transitions.push((pos, *id));
 
     if let Some(t) = next.1 {
-      let mut next_pos = stones.len();
-      for i in 0..stones.len() {
-        if stones[i] == t {
-          next_pos = i;
-          break;
-        }
+      let id = ids.entry(t).or_insert(len);
+      if *id == len {
+        stones[len] = t;
+        len += 1;
       }
-      if next_pos == stones.len() {
-        stones.push(t);
-      }
-      transitions.push((pos, next_pos));
+      transitions.push((pos, *id));
     }
     pos += 1;
   }
