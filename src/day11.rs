@@ -58,7 +58,6 @@ fn get_transition_matrix(input: &str) -> DMatrix<usize> {
     pos += 1;
   }
 
-  // let mut m = vec![vec![0; stones.len()]; stones.len()];
   let mut m = DMatrix::<usize>::zeros(stones.len(), stones.len());
 
   for t in transitions {
@@ -71,11 +70,7 @@ fn get_transition_matrix(input: &str) -> DMatrix<usize> {
 // #[aoc(day11, part1, matrix)]
 pub fn part1_matrix(input: &str) -> usize {
   let m = get_transition_matrix(input);
-  println!("got m, {:?}", m.nrows());
-  // println!("{:?}", m);
   let m = m.pow(25);
-  println!("got m pow");
-  // let mut stones = vec![0; m.nrows()];
 
   let mut stones = DMatrix::<usize>::zeros(m.nrows(), m.ncols());
   for init in 0..get_stones(input).len() {
@@ -91,9 +86,7 @@ pub fn part1_matrix(input: &str) -> usize {
 // #[aoc(day11, part2, matrix)]
 pub fn part2_matrix(input: &str) -> usize {
   let m = get_transition_matrix(input);
-  // println!("{:?}", m);
   let m = m.pow(75);
-  // let mut stones = vec![0; m.nrows()];
 
   let mut stones = DMatrix::<usize>::zeros(m.nrows(), m.ncols());
   for init in 0..get_stones(input).len() {
