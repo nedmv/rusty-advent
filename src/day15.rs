@@ -52,9 +52,12 @@ pub fn part1(input: &str) -> usize {
   let (mut m, seq) = parse_input(input);
   let mut pos = find_start(&mut m);
 
+  let mut d;
+  let mut robot_next;
+
   'outer: for ch in seq {
-    let d = get_step(ch);
-    let robot_next = get_next_pos(pos, d);
+    d = get_step(ch);
+    robot_next = get_next_pos(pos, d);
     let mut next = robot_next;
     loop {
       match m[next.0][next.1] {
@@ -94,7 +97,7 @@ fn expand(m: &Vec<Vec<u8>>) -> (Vec<Vec<u8>>, (usize, usize)) {
         },
         b'@' => {
           let c = col << 1;
-          new_m[row][c] = b'.';
+          new_m[row][c] = b'.'; // ignore '@' placement
           new_m[row][c+1] = b'.';
           start = (row, c);
         },
@@ -113,15 +116,23 @@ pub fn part2(input: &str) -> usize {
   let left = (0, -1);
   let right = (0, 1);
 
-  'outer: for ch in seq {
-    let d = get_step(ch);
-    let robot_next = get_next_pos(pos, d);
+  let mut q = Vec::new();
+  let mut seen = HashSet::with_hasher(Hash);
+  let mut from = Vec::new();
+  let mut to = Vec::new();
 
-    let mut q = Vec::new();
-    let mut seen = HashSet::with_hasher(Hash);
-    let mut from = Vec::new();
-    let mut to = Vec::new();
-    let mut next;
+  let mut d ;
+  let mut robot_next;
+  let mut next;
+
+  'outer: for ch in seq {
+    q.clear();
+    seen.clear();
+    from.clear();
+    to.clear();
+    
+    d = get_step(ch);
+    robot_next = get_next_pos(pos, d);
     from.push(pos);
     to.push((robot_next, b'.'));
     q.push(robot_next);
@@ -159,10 +170,10 @@ pub fn part2(input: &str) -> usize {
       }
     }
     pos = robot_next;
-    for (r, c) in from {
+    for &(r, c) in &from {
       m[r][c] = b'.';
     }
-    for ((r, c), ch) in to {
+    for &((r, c), ch) in &to {
       m[r][c] = ch;
     }
   }
