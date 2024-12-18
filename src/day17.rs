@@ -1,5 +1,3 @@
-use std::mem::swap;
-
 #[allow(non_snake_case)]
 #[derive(Debug, Default)]
 struct Register {
@@ -86,23 +84,29 @@ pub fn part2(input: &str) -> u64 {
   let (program, _) = parse_input(input);
   let mut registers = Register::default();
   let mut candidates = Vec::new();
-  candidates.push(0);
-  let mut next = Vec::new();
-  let mut cur;
-  for &target in program.iter().rev() {
-    for cand in &candidates {
-      for i in 0..8 {
-        cur = cand*8 + i;
-        registers.A = cur;
-        if run_once(&program, &mut registers) == target {
-          next.push(cur);
+  candidates.push((program.len()-1, 0));
+  let mut possible_ans = None;
+
+  while let Some((pos, val)) = candidates.pop() {
+    for cur in (val*8..(val+1)*8).rev() {
+      registers.A = cur;
+      // Seems to work even without cleaning B and C, but just in case...
+      registers.B = 0;
+      registers.C = 0;
+      if run_once(&program, &mut registers) == program[pos] {
+        // push larger candidates in queue first, but pick min ans on last step
+        if pos == 0 {
+          possible_ans = Some(cur);
+        } else {
+          candidates.push((pos-1, cur));
         }
       }
     }
-    swap(&mut candidates, &mut next);
-    next.clear();
+    if let Some(cur) = possible_ans {
+      return cur;
+    }
   }
-  candidates[0] // candidates are always sorted
+  0
 }
 
 #[cfg(test)]
