@@ -1,6 +1,55 @@
 use std::collections::HashMap;
 use fasthash::city::Hash128 as Hash;
 
+
+#[derive(PartialEq)]
+struct Trie {
+  children: [Option<Box<Trie>>;5],
+  exists: bool
+}
+
+impl Trie {
+  fn new() -> Self {
+    Trie {children: [const {None}; 5], exists: false}
+  }
+  fn add(&mut self, s: &str) {
+    if s.len() == 0 {
+      self.exists = true;
+      return;
+    }
+    let id = Self::get_id(s.bytes().next().unwrap());
+    if self.children[id] == None {
+      self.children[id] = Some(Box::<Trie>::new(Trie::new()));
+    }
+    self.children[id].as_mut().unwrap().add(&s[1..]);
+  }
+
+  fn get_offsets(&self, s: &str, depth: usize, offsets: &mut Vec<usize>) {
+    if self.exists {
+      offsets.push(depth);
+    }
+    if s.len() == 0 {
+      return;
+    }
+    let id = Self::get_id(s.bytes().next().unwrap());
+    if self.children[id] == None {
+      return;
+    }
+    self.children[id].as_ref().unwrap().get_offsets(&s[1..], depth+1, offsets);
+  }
+
+  fn get_id(ch: u8) -> usize {
+    match ch {
+      b'w' => 0,
+      b'u' => 1,
+      b'b' => 2,
+      b'r' => 3,
+      b'g' => 4,
+      _ => {panic!("Unexpected character {}", ch)}
+    }
+  }
+}
+
 fn parse(input: &str) -> (Vec<&str>, Vec<&str>) {
   let mut lines = input.lines();
   let patterns = lines.next().unwrap().split(", ").collect();
@@ -8,7 +57,7 @@ fn parse(input: &str) -> (Vec<&str>, Vec<&str>) {
   (patterns, designs)
 }
 
-fn rec<'a>(design: &'a str, patterns: &Vec<&str>, dp: &mut HashMap<&'a str, usize, Hash>) -> usize {
+fn rec<'a>(design: &'a str, patterns: &Trie, dp: &mut HashMap<&'a str, usize, Hash>) -> usize {
   if design.len() == 0 { // performing this check via hash map is significantly slower
     return 1;
   }
@@ -16,10 +65,11 @@ fn rec<'a>(design: &'a str, patterns: &Vec<&str>, dp: &mut HashMap<&'a str, usiz
     return *val;
   }
   let mut ans = 0;
-  for &pat in patterns.iter() {
-    if design.starts_with(pat) {
-      ans += rec(&design[pat.len()..], patterns, dp);
-    }
+  let mut offsets = Vec::new();
+  patterns.get_offsets(design, 0, &mut offsets);
+  
+  for offset in offsets {
+    ans += rec(&design[offset..], patterns, dp);
   }
   dp.insert(design, ans);
   ans
@@ -28,10 +78,14 @@ fn rec<'a>(design: &'a str, patterns: &Vec<&str>, dp: &mut HashMap<&'a str, usiz
 #[aoc(day19, part1)]
 pub fn part1(input: &str) -> u32 {
   let (patterns, designs) = parse(input);
+  let mut trie = Trie::new();
+  for p in patterns {
+    trie.add(p);
+  }
   let mut dp = HashMap::with_hasher(Hash);
   let mut ans = 0;
   for d in designs {
-    if rec(d, &patterns, &mut dp) > 0 {
+    if rec(d, &trie, &mut dp) > 0 {
       ans += 1;
     }
   }
@@ -41,10 +95,14 @@ pub fn part1(input: &str) -> u32 {
 #[aoc(day19, part2)]
 pub fn part2(input: &str) -> usize {
   let (patterns, designs) = parse(input);
+  let mut trie = Trie::new();
+  for p in patterns {
+    trie.add(p);
+  }
   let mut dp = HashMap::with_hasher(Hash);
   let mut ans = 0;
   for d in designs {
-    ans += rec(d, &patterns, &mut dp);
+    ans += rec(d, &trie, &mut dp);
   }
   ans
 }
