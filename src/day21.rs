@@ -4,6 +4,7 @@ use std::mem::swap;
 
 type Deque = VecDeque<(i32, usize, Vec<u8>)>;
 type PathBase = Vec<Vec<Vec<Vec<u8>>>>;
+type Cache = Vec<HashMap<Vec<u8>, usize, Hash>>;
 
 #[derive(PartialEq)]
 enum Moves{UP = b'^' as isize,
@@ -16,8 +17,8 @@ impl Moves {
 }
 
 type Keypad = &'static[&'static[u8]];
-const KEYPADS: [Keypad; 2] = [&[&[b'7', b'8', b'9'], &[b'4', b'5', b'6'], &[b'1', b'2', b'3'], &[b'#', b'0', b'A']],
-                              &[&[b'#', b'^', b'A'], &[b'<', b'v', b'>']]];
+const KEYPADS: [Keypad; 2] = [&[&[b'7', b'8', b'9'], &[b'4', b'5', b'6'], &[b'1', b'2', b'3'], &[b'#', b'0', b'A']], // NUMERIC
+                              &[&[b'#', b'^', b'A'], &[b'<', b'v', b'>']]];                                          // DIRECTIONAL
 
 fn number_to_id(num: u8) -> usize {
   match num {
@@ -115,11 +116,15 @@ fn precalculate_paths(keypad: Keypad, q: &mut Deque) -> PathBase {
   paths
 }
 
-fn generate_initial_paths(code: &Vec<usize>, keypad_paths: &PathBase) -> Vec<Vec<u8>> {
+fn generate_initial_paths(code: &Vec<usize>, keypad_paths: &mut PathBase) -> Vec<Vec<u8>> {
   let mut paths: Vec<Vec<u8>> = vec![Vec::new(); 1];
   let mut next = Vec::new();
   let mut prev_id = number_to_id(b'A');
+  let mut q = VecDeque::new();
   for &id in code {
+    if keypad_paths[prev_id][id].is_empty() {
+      keypad_paths[prev_id][id] = get_paths(prev_id, id, number_to_id(b'#'), 12, &mut q);
+    }
     let cur_paths = keypad_paths[prev_id][id].clone();
     prev_id = id;
     for p in &paths {
@@ -135,7 +140,7 @@ fn generate_initial_paths(code: &Vec<usize>, keypad_paths: &PathBase) -> Vec<Vec
   paths
 }
 
-fn find_optimal_solution(path: &Vec<u8>, depth: usize, keypad_paths: &PathBase, cache: &mut Vec<HashMap<Vec<u8>, usize, Hash>>) -> usize {
+fn find_optimal_solution(path: &Vec<u8>, depth: usize, keypad_paths: &PathBase, cache: &mut Cache) -> usize {
   if depth == 0 {
     return path.len();
   }
@@ -160,9 +165,9 @@ fn find_optimal_solution(path: &Vec<u8>, depth: usize, keypad_paths: &PathBase, 
   ans
 }
 
-fn enter_code(code: &str, depth: usize, keypad_paths: &[PathBase; 2], cache: &mut Vec<HashMap<Vec<u8>, usize, Hash>>) -> usize {
+fn enter_code(code: &str, depth: usize, keypad_paths: &mut [PathBase; 2], cache: &mut Cache) -> usize {
   let code: Vec<_> = code.bytes().map(|b| number_to_id(b)).collect();
-  let paths = generate_initial_paths(&code, &keypad_paths[0]);
+  let paths = generate_initial_paths(&code, &mut keypad_paths[0]);
 
   let mut best = usize::MAX;
   for path in paths {
@@ -173,13 +178,13 @@ fn enter_code(code: &str, depth: usize, keypad_paths: &[PathBase; 2], cache: &mu
 
 fn solve(input: &str, depth: usize) -> usize {
   let mut q = VecDeque::new();
-  let keypad_paths: [PathBase; 2] = [precalculate_paths(KEYPADS[0], &mut q), precalculate_paths(KEYPADS[1], &mut q)];
+  let mut keypad_paths: [PathBase; 2] = [vec![vec![Vec::new(); 12]; 12], precalculate_paths(KEYPADS[1], &mut q)];
   let mut cache = (0..=depth).map(|_| HashMap::with_hasher(Hash)).collect();
 
   let mut ans = 0;
   for code in input.lines() {
     let num: usize = code[..3].parse().unwrap();
-    let score = enter_code(code, depth, &keypad_paths, &mut cache);
+    let score = enter_code(code, depth, &mut keypad_paths, &mut cache);
     ans += num * score;
   }
   ans
